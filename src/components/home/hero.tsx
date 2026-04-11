@@ -12,6 +12,7 @@ export default component$(() => {
           class="w-full h-full object-cover"
           width={1600}
           height={600}
+          loading="lazy"
         />
       </div>
 

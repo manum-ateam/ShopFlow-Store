@@ -1,30 +1,11 @@
 import { component$ } from "@builder.io/qwik";
-import { Link, type DocumentHead, routeAction$, Form, zod$, z } from "@builder.io/qwik-city";
+import { Link, type DocumentHead, Form } from "@builder.io/qwik-city";
 import { useCart } from "~/context/cart-context";
 import { formatCurrency } from "~/lib/utils";
 import { EmptyState } from "~/components/ui/EmptyState";
-import { updateCartItemApi, removeCartItemApi } from "~/lib/api";
+import { useCartAction } from "./actions";
 
-// Server-side Cart Management
-export const useCartAction = routeAction$(async (data, { cookie, fail }) => {
-  const sessionId = cookie.get('sf_session')?.value;
-  if (!sessionId) return fail(401, { message: "Session expired" });
-
-  try {
-    if (data.type === "remove") {
-      await removeCartItemApi(data.id, sessionId);
-    } else if (data.type === "update") {
-      await updateCartItemApi(data.id, sessionId, data.quantity || 1);
-    }
-    return { success: true };
-  } catch (e: any) {
-    return fail(400, { message: e.message });
-  }
-}, zod$({
-  type: z.enum(["update", "remove"]),
-  id: z.string(), // This is the cartItemId ({productId}-{variantId})
-  quantity: z.coerce.number().optional(),
-}));
+export { useCartAction };
 
 export default component$(() => {
   const { state, updateQuantity, removeItem, subtotal } = useCart();
@@ -81,7 +62,7 @@ export default component$(() => {
                           class="w-10 h-10 flex items-center justify-center rounded-xl border border-border bg-surface-dim disabled:opacity-30 transition-all shadow-sm"
                           aria-label="Decrease"
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                         </button>
                      </Form>
 

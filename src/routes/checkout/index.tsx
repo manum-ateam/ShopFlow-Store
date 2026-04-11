@@ -1,81 +1,10 @@
-import { component$, useTask$, useComputed$ } from "@builder.io/qwik";
-import { Form, routeAction$, zod$, z, type DocumentHead, useLocation, Link } from "@builder.io/qwik-city";
+import { component$, useComputed$ } from "@builder.io/qwik";
+import { Form, type DocumentHead, useLocation, Link } from "@builder.io/qwik-city";
 import { useCart } from "~/context/cart-context";
 import { formatCurrency } from "~/lib/utils";
-import { createCheckoutSession } from "~/lib/api";
+import { useCheckoutAction } from "./actions";
 
-// Multi-Step Validation Schemas
-const shippingSchema = z.object({
-  step: z.literal("shipping"),
-  email: z.string().email("Please enter a valid email address"),
-  fullName: z.string().min(3, "Full name must be at least 3 characters"),
-  address: z.string().min(5, "Please provide a complete address"),
-  city: z.string().min(2, "City name is too short"),
-  zip: z.string().min(5, "Valid ZIP code required"),
-});
-
-const paymentSchema = z.object({
-  step: z.literal("payment"),
-  cardName: z.string().min(3, "Cardholder name is required"),
-  cardNumber: z.string().regex(/^\d{16}$/, "Card number must be 16 digits"),
-  expiry: z.string().regex(/^(0[1-9]|1[0-2])\/\d{2}$/, "Use MM/YY format"),
-  cvv: z.string().regex(/^\d{3,4}$/, "Invalid CVV"),
-});
-
-const reviewSchema = z.object({
-  step: z.literal("review"),
-});
-
-const checkoutSchema = z.discriminatedUnion("step", [
-  shippingSchema,
-  paymentSchema,
-  reviewSchema,
-]);
-
-export const useCheckoutAction = routeAction$(async (data, { redirect, cookie, fail }) => {
-  const sessionId = cookie.get('sf_session')?.value;
-  if (!sessionId) return fail(401, { message: "Session expired" });
-
-  if (data.step === "shipping") {
-    // We could save shipping to a temporary cookie here if needed
-    throw redirect(303, "/checkout?step=payment");
-  }
-  if (data.step === "payment") {
-    throw redirect(303, "/checkout?step=review");
-  }
-
-  if (data.step === "review") {
-    try {
-      // Create real checkout session
-      const result = await createCheckoutSession({
-        session_id: sessionId,
-        email: "customer@example.com", 
-        shipping: {
-          address: "123 Main St", 
-          city: "San Francisco",
-          postal_code: "94105",
-          country: "US"
-        },
-        payment: {
-          method: "card",
-          card_token: "tok_visa",
-          card_last_four: "4242"
-        }
-      });
-      
-      // Cleanup: Clear the session since order is placed
-      cookie.delete('sf_cart', { path: '/' });
-      
-      return { 
-        success: true, 
-        orderId: result.order_id,
-        total: result.total
-      };
-    } catch (e: any) {
-      return fail(400, { message: e.message });
-    }
-  }
-}, zod$(checkoutSchema));
+export { useCheckoutAction };
 
 export default component$(() => {
   const loc = useLocation();
@@ -84,17 +13,9 @@ export default component$(() => {
   
   const currentStep = loc.url.searchParams.get("step") || "shipping";
 
-  // 
   const tax = useComputed$(() => Math.round(subtotal.value * 0.08));
-  const shippingCost = 999; // Fixed $9.99
+  const shippingCost = 999; 
   const grandTotal = useComputed$(() => subtotal.value + tax.value + shippingCost);
-
-  useTask$(({ track }) => {
-    track(() => checkoutAction.value?.success);
-    if (checkoutAction.value?.success) {
-      cart.items = [];
-    }
-  });
 
   if (checkoutAction.value?.success) {
     return (
@@ -170,7 +91,7 @@ export default component$(() => {
                       <div key={item.id} class="flex justify-between items-center py-4 border-b border-border">
                         <div class="flex items-center gap-4">
                            <div class="w-12 h-12 bg-surface-dim rounded-lg overflow-hidden border border-border">
-                              <img src={item.images[0]} class="w-full h-full object-cover" />
+                              <img width={1200} height={1200} src={item.images[0]} class="w-full h-full object-cover" />
                            </div>
                            <div>
                               <p class="text-sm font-bold uppercase">{item.name}</p>

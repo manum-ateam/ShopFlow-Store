@@ -1,10 +1,12 @@
 import { component$, useSignal, $ } from "@builder.io/qwik";
-import { routeLoader$, routeAction$, Form, zod$, z, type DocumentHead, Link } from "@builder.io/qwik-city";
-import { getProductById, addToCartApi } from "~/lib/api";
+import { routeLoader$, Form, type DocumentHead, Link } from "@builder.io/qwik-city";
+import { getProductById } from "~/lib/api";
 import { formatCurrency } from "~/lib/utils";
 import { useCart } from "~/context/cart-context";
-
+import { useAddToCartAction } from "./actions";
 import type { Product } from "~/types/prodcuts";
+
+export { useAddToCartAction };
 
 export const useProduct = routeLoader$(async ({ params, status }) => {
   try {
@@ -15,35 +17,6 @@ export const useProduct = routeLoader$(async ({ params, status }) => {
     return null;
   }
 });
-
-export const useAddToCartAction = routeAction$(async (data, { fail, cookie }) => {
-  const sessionId = cookie.get('sf_session')?.value;
-  if (!sessionId) return fail(401, { message: "Session expired. Please refresh." });
-
-  try {
-    await addToCartApi({
-      productId: data.productId,
-      variantId: data.variantId,
-      quantity: data.quantity,
-      sessionId: sessionId
-    });
-
-    const product = await getProductById(data.productId);
-    const variant = product.variants?.find((v: any) => v.id === data.variantId);
-
-    return { 
-      success: true, 
-      variantName: variant?.name || "Selected option" 
-    };
-  } catch (e: any) {
-    // (Out of stock, etc.) are caught and displayed to user
-    return fail(400, { message: e.message });
-  }
-}, zod$({
-  productId: z.string(),
-  variantId: z.string(),
-  quantity: z.coerce.number().min(1).max(99),
-}));
 
 export default component$(() => {
   const productSignal = useProduct();

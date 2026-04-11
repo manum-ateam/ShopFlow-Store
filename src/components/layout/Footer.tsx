@@ -34,12 +34,12 @@ export const Footer = component$(() => {
           <div>
              <h4 class="font-bold text-sm uppercase tracking-widest mb-6">Newsletter</h4>
              <p class="text-sm text-text-muted mb-4">Subscribe for updates and exclusive deals.</p>
-             <div class="flex gap-2">
+             {/* <div class="flex gap-2">
                <input type="email" placeholder="Email address" class="bg-surface border border-border px-4 py-2 rounded-xl text-sm flex-1 outline-hidden focus:ring-2 focus:ring-primary/20" />
                <button class="bg-primary text-white p-2 rounded-xl hover:bg-primary-dark transition-colors">
                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
                </button>
-             </div>
+             </div> */}
           </div>
         </div>
         
