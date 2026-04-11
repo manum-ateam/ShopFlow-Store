@@ -1,8 +1,8 @@
 import { component$, useSignal, $ } from "@builder.io/qwik";
 import { routeLoader$, routeAction$, Form, zod$, z, type DocumentHead, Link } from "@builder.io/qwik-city";
-import { getProductById } from "~/lib/api";
+import { getProductById, addToCartApi } from "~/lib/api";
 import { formatCurrency } from "~/lib/utils";
-import { useCart, type CartItem } from "~/context/cart-context";
+import { useCart } from "~/context/cart-context";
 
 import type { Product } from "~/types/prodcuts";
 
@@ -16,44 +16,31 @@ export const useProduct = routeLoader$(async ({ params, status }) => {
   }
 });
 
-// Server-side Cart Mutation (Works without JS)
+// Call real backend API for cart mutations
 export const useAddToCartAction = routeAction$(async (data, { fail, cookie }) => {
-  const product = await getProductById(data.productId) as Product;
-  const variant = product.variants?.find((v) => v.id === data.variantId);
+  const sessionId = cookie.get('sf_session')?.value;
+  if (!sessionId) return fail(401, { message: "Session expired. Please refresh." });
 
-  // REQUIREMENT 2.2: Inventory Validation
-  if (!variant || variant.inventory <= 0) {
-    return fail(400, { message: "This variant is currently out of stock." });
-  }
-
-  // Get existing cart from cookie
-  const cartCookie = cookie.get('sf_cart');
-  let items: CartItem[] = [];
-  if (cartCookie) {
-    try {
-      items = JSON.parse(decodeURIComponent(cartCookie.value));
-    } catch { items = []; }
-  }
-
-  const existingIndex = items.findIndex(i => i.id === product.id && i.variantId === data.variantId);
-  if (existingIndex > -1) {
-    items[existingIndex].quantity = Math.min(99, items[existingIndex].quantity + data.quantity);
-  } else {
-    items.push({
-      ...product,
-      quantity: data.quantity,
+  try {
+    await addToCartApi({
+      productId: data.productId,
       variantId: data.variantId,
-      variantName: variant.name,
-      price: variant.price || product.price
+      quantity: data.quantity,
+      sessionId: sessionId
     });
+
+    const product = await getProductById(data.productId);
+    const variant = product.variants?.find((v: any) => v.id === data.variantId);
+
+    return { 
+      success: true, 
+      variantName: variant?.name || "Selected option" 
+    };
+  } catch (e: any) {
+    // 🛡️ API Errors (Out of stock, etc.) are caught and displayed to user
+    return fail(400, { message: e.message });
   }
-
-  // PERSISTENCE: Save to cookie (Server-side update)
-  cookie.set('sf_cart', JSON.stringify(items), { path: '/', maxAge: 31536000 });
-
-  // If it's a standard Form post (No JS), redirect to cart
-  return { success: true, variantName: variant.name };
-}, zod$( {
+}, zod$({
   productId: z.string(),
   variantId: z.string(),
   quantity: z.coerce.number().min(1).max(99),
@@ -68,9 +55,9 @@ export default component$(() => {
   if (!productSignal.value) {
     return (
       <div class="container-tight py-40 text-center">
-        <h1 class="text-3xl font-semibold mb-4 uppercase italic tracking-tighter">Product Not Found</h1>
+        <h1 class="text-3xl font-semibold mb-4 uppercase tracking-tighter">Product Not Found</h1>
         <p class="text-text-muted mb-8 font-medium">We couldn't find the product you're looking for.</p>
-        <Link href="/products" class="inline-block bg-black text-white px-5 py-2.5 rounded font-semibold text-md">
+        <Link href="/products" class="inline-block bg-black text-white px-8 py-4 rounded-md font-bold text-xs uppercase tracking-widest bg-primary">
           Back to Catalog
         </Link>
       </div>
@@ -78,12 +65,11 @@ export default component$(() => {
   }
 
   const product = productSignal.value as Product;
-  const activeVariantId = selectedVariantId.value || product.variants?.[0]?.id;
+  const activeVariantId = selectedVariantId.value || product.variants?.[0]?.id || "";
   const activeVariant = product.variants?.find((v) => v.id === activeVariantId) || product.variants?.[0];
 
   const formattedPrice = formatCurrency(activeVariant?.price || product.price || 0);
 
-  // Client-side sync for instant header update
   const handleSuccess = $(() => {
     if (addToCartAction.value?.success) {
       addItem(product, 1, activeVariantId, activeVariant?.name);
@@ -91,10 +77,10 @@ export default component$(() => {
   });
 
   return (
-    <div class="container-tight py-12 md:py-24">
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
+    <div class="container-tight py-12 md:py-24 animate-in fade-in duration-1000">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-20">
         <div class="space-y-4">
-          <div class="aspect-square bg-surface-dim rounded-md lg:rounded-3xl overflow-hidden border border-border transition-all hover:shadow-premium group">
+          <div class="aspect-square bg-surface-dim rounded-lg overflow-hidden border border-border group">
              <img 
               src={product.images[0]} 
               class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
@@ -105,10 +91,10 @@ export default component$(() => {
           </div>
         </div>
 
-        <div class="flex flex-col justify-start pt-4 lg:pt-0">
+        <div class="flex flex-col justify-start">
            <div class="mb-10">
               <span class="text-[10px] font-black text-primary uppercase tracking-[0.4em] mb-4 block">ShopFlow Collection</span>
-              <h1 class="text-xl lg:text-3xl font-semibold mb-6 tracking-tighter uppercase leading-tight ">
+              <h1 class="text-3xl font-bold mb-6 tracking-tighter uppercase leading-tight ">
                 {product.name}
               </h1>
               <p class="text-2xl font-semibold tracking-tighter text-text">{formattedPrice}</p>
@@ -118,7 +104,6 @@ export default component$(() => {
             {product.description}
           </p>
 
-           {/*  Works without JS using standard Form POST */}
            <Form action={addToCartAction} onSubmitCompleted$={handleSuccess}>
               <input type="hidden" name="productId" value={product.id} />
               <input type="hidden" name="variantId" value={activeVariantId} />
@@ -133,7 +118,7 @@ export default component$(() => {
                             key={v.id}
                             type="button"
                             onClick$={() => selectedVariantId.value = v.id}
-                            class={`px-6 py-4 rounded-xl border font-bold text-[10px] uppercase tracking-widest transition-all min-h-[44px] ${activeVariantId === v.id ? 'border-primary bg-primary/5 text-primary shadow-sm' : 'border-border bg-surface-dim text-text hover:border-text-muted'}`}
+                            class={`px-6 py-4 rounded-md border font-bold text-[10px] uppercase tracking-widest transition-all min-h-[44px] ${activeVariantId === v.id ? 'border-primary bg-primary/5 text-primary shadow-sm' : 'border-border bg-surface-dim text-text hover:border-text-muted'}`}
                         >
                             {v.name}
                         </button>
@@ -152,21 +137,21 @@ export default component$(() => {
               <div class="space-y-4">
                  <button 
                     disabled={!activeVariant || (activeVariant?.inventory ?? 0) <= 0 || addToCartAction.isRunning}
-                    class="bg-black text-white px-10 py-4 rounded-md font-medium uppercase tracking-widest text-[15px] bg-primary transition-all w-full disabled:opacity-50 disabled:cursor-not-allowed min-h-[60px] shadow-premium flex items-center justify-center gap-3 active:scale-[0.98]"
+                    class="bg-black text-white px-10 py-5 rounded-md font-bold uppercase tracking-widest text-[15px] bg-primary transition-all w-full disabled:opacity-50 disabled:cursor-not-allowed min-h-[60px] shadow-premium flex items-center justify-center gap-3 active:scale-[0.98]"
                  >
                     {addToCartAction.isRunning ? <div class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : 'Add to Bag'}
                  </button>
                  
                  {addToCartAction.value?.message && (
-                    <div class="p-4 bg-red-50 border border-red-100 rounded-xl flex items-center gap-4 text-red-600 font-bold text-[10px] uppercase tracking-wider animate-in slide-in-from-top-2">
+                    <div class="p-4 bg-red-50 border border-red-100 rounded-lg flex items-center gap-4 text-red-600 font-bold text-[10px] uppercase tracking-wider animate-in slide-in-from-top-2">
                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                        {addToCartAction.value.message}
                     </div>
                  )}
                  {addToCartAction.value?.success && (
-                    <div class="p-4 bg-green-50 border border-green-100 rounded-xl flex items-center gap-4 text-green-700 font-bold text-[10px] uppercase tracking-wider animate-in slide-in-from-top-2">
+                    <div class="p-4 bg-green-50 border border-green-100 rounded-lg flex items-center gap-4 text-green-700 font-bold text-[10px] uppercase tracking-wider animate-in slide-in-from-top-2">
                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                       Added {addToCartAction.value.variantName} to your bag
+                       Added to your bag
                     </div>
                  )}
               </div>
@@ -181,11 +166,5 @@ export const head: DocumentHead = ({ resolveValue }) => {
   const product = resolveValue(useProduct);
   return {
     title: `${product?.name || 'Exclusive'} | ShopFlow`,
-    meta: [
-      {
-        name: "description",
-        content: product?.description || "Curated Designer Pieces",
-      },
-    ],
   };
 };

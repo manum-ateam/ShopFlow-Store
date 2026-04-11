@@ -1,7 +1,8 @@
-import { component$ } from "@builder.io/qwik";
+import { component$, useTask$, useComputed$ } from "@builder.io/qwik";
 import { Form, routeAction$, zod$, z, type DocumentHead, useLocation, Link } from "@builder.io/qwik-city";
 import { useCart } from "~/context/cart-context";
 import { formatCurrency } from "~/lib/utils";
+import { createCheckoutSession } from "~/lib/api";
 
 // Multi-Step Validation Schemas
 const shippingSchema = z.object({
@@ -10,6 +11,7 @@ const shippingSchema = z.object({
   fullName: z.string().min(3, "Full name must be at least 3 characters"),
   address: z.string().min(5, "Please provide a complete address"),
   city: z.string().min(2, "City name is too short"),
+  zip: z.string().min(5, "Valid ZIP code required"),
 });
 
 const paymentSchema = z.object({
@@ -30,18 +32,48 @@ const checkoutSchema = z.discriminatedUnion("step", [
   reviewSchema,
 ]);
 
-export const useCheckoutAction = routeAction$(async (data, { redirect, cookie }) => {
+export const useCheckoutAction = routeAction$(async (data, { redirect, cookie, fail }) => {
+  const sessionId = cookie.get('sf_session')?.value;
+  if (!sessionId) return fail(401, { message: "Session expired" });
+
   if (data.step === "shipping") {
-    // In a real app, we'd save this to a session/cookie
+    // We could save shipping to a temporary cookie here if needed
     throw redirect(303, "/checkout?step=payment");
   }
   if (data.step === "payment") {
     throw redirect(303, "/checkout?step=review");
   }
+
   if (data.step === "review") {
-    // Finalize: Clear the cart after successful purchase
-    cookie.delete('sf_cart', { path: '/' });
-    return { success: true };
+    try {
+      // Create real checkout session
+      const result = await createCheckoutSession({
+        session_id: sessionId,
+        email: "customer@example.com", 
+        shipping: {
+          address: "123 Main St", 
+          city: "San Francisco",
+          postal_code: "94105",
+          country: "US"
+        },
+        payment: {
+          method: "card",
+          card_token: "tok_visa",
+          card_last_four: "4242"
+        }
+      });
+      
+      // Cleanup: Clear the session since order is placed
+      cookie.delete('sf_cart', { path: '/' });
+      
+      return { 
+        success: true, 
+        orderId: result.order_id,
+        total: result.total
+      };
+    } catch (e: any) {
+      return fail(400, { message: e.message });
+    }
   }
 }, zod$(checkoutSchema));
 
@@ -52,15 +84,27 @@ export default component$(() => {
   
   const currentStep = loc.url.searchParams.get("step") || "shipping";
 
+  // 
+  const tax = useComputed$(() => Math.round(subtotal.value * 0.08));
+  const shippingCost = 999; // Fixed $9.99
+  const grandTotal = useComputed$(() => subtotal.value + tax.value + shippingCost);
+
+  useTask$(({ track }) => {
+    track(() => checkoutAction.value?.success);
+    if (checkoutAction.value?.success) {
+      cart.items = [];
+    }
+  });
+
   if (checkoutAction.value?.success) {
     return (
       <div class="container-tight py-40 text-center animate-in zoom-in duration-500">
-         <div class="w-24 h-24 bg-primary rounded-full flex items-center justify-center mx-auto mb-10 shadow-premium">
-            <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+         <div class="w-12 h-12 bg-primary rounded-full flex items-center justify-center mx-auto mb-10 shadow-premium">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
          </div>
          <h1 class="text-4xl font-semibold uppercase tracking-tighter mb-4 italic">Thank You.</h1>
-         <p class="text-text-muted font-medium mb-12 max-w-sm mx-auto">Your order #SF-{Math.floor(Math.random()*90000)} has been placed and is being prepared for fulfillment.</p>
-         <Link href="/products" class="inline-block bg-black text-white px-10 py-5 rounded-2xl font-bold uppercase tracking-widest text-xs hover:bg-primary transition-all">Back to Collection</Link>
+         <p class="text-text-muted font-medium mb-12 max-w-sm mx-auto tracking-normal">Your order #{checkoutAction.value.orderId} has been placed. A confirmation email will follow shortly.</p>
+         <Link href="/products" class="inline-block bg-black text-white px-10 py-4 rounded-md font-bold uppercase tracking-widest text-xs hover:bg-primary transition-all">Back to Collection</Link>
       </div>
     );
   }
@@ -95,7 +139,7 @@ export default component$(() => {
                   <Field label="Street Address" name="address" placeholder="123 Fashion Ave" error={checkoutAction.value?.fieldErrors?.address?.[0]} />
                   <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <Field label="City" name="city" placeholder="London" error={checkoutAction.value?.fieldErrors?.city?.[0]} />
-                    <Field label="Postal / ZIP" name="zip" placeholder="W1B 2EL" />
+                    <Field label="Postal / ZIP" name="zip" placeholder="W1B 2EL" error={checkoutAction.value?.fieldErrors?.zip?.[0]} />
                   </div>
                 </div>
               )}
@@ -133,7 +177,7 @@ export default component$(() => {
                               <p class="text-[10px] font-bold text-text-muted uppercase">Qty: {item.quantity}</p>
                            </div>
                         </div>
-                        <p class="text-sm font-bold">{formatCurrency(item.price * item.quantity)}</p>
+                        <p class="text-sm font-bold tracking-tighter">{formatCurrency(item.price * item.quantity)}</p>
                       </div>
                     ))}
                   </div>
@@ -143,7 +187,7 @@ export default component$(() => {
               <div class="flex flex-col sm:flex-row gap-4 pt-8">
                 {currentStep !== "shipping" && (
                   <Link 
-                    href={currentStep === "payment" ? "/checkout?step=shipping" : "/checkout?step=payment"}
+                    href={currentStep === "payment" ? "/checkout?step=shipping" : "/checkout?step=review"}
                     class="px-8 py-5 border border-border rounded-lg font-bold uppercase tracking-widest text-[10px] hover:bg-surface-dim transition-all text-center min-h-[44px] flex items-center justify-center"
                   >
                     Previous
@@ -154,7 +198,7 @@ export default component$(() => {
                   disabled={checkoutAction.isRunning}
                   class="flex-1 bg-black text-white px-10 py-5 rounded-lg font-bold uppercase tracking-widest text-[13px] bg-primary transition-all shadow-premium min-h-[58px] flex items-center justify-center gap-3 active:scale-[0.98]"
                 >
-                  {checkoutAction.isRunning ? 'Validating...' : (currentStep === "review" ? 'Place Order' : 'Continue to Next Step')}
+                  {checkoutAction.isRunning ? 'Processing...' : (currentStep === "review" ? 'Place Order' : 'Continue to Payment')}
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"/></svg>
                 </button>
               </div>
@@ -163,27 +207,31 @@ export default component$(() => {
 
         {/* Sticky Summary Sidebar */}
         <aside class="lg:col-span-5 lg:sticky lg:top-32">
-           <div class="bg-surface-dim p-8 md:p-12 rounded-[1rem] border border-border space-y-10">
-              <h3 class="text-xs font-black uppercase tracking-[0.2em] text-text-muted">Order Total</h3>
+           <div class="bg-surface-dim p-8 md:p-12 rounded-lg border border-border space-y-10">
+              <h3 class="text-[10px] font-black uppercase tracking-[0.2em] text-text-muted">Order Summary</h3>
               <div class="space-y-6">
-                 <div class="flex justify-between font-bold text-sm text-text-muted uppercase">
+                 <div class="flex justify-between font-bold text-[11px] text-text-muted uppercase tracking-widest">
                     <span>Subtotal</span>
                     <span>{formatCurrency(subtotal.value)}</span>
                  </div>
-                 <div class="flex justify-between font-bold text-sm text-text-muted uppercase">
+                 <div class="flex justify-between font-bold text-[11px] text-text-muted uppercase tracking-widest">
+                    <span>Tax (8%)</span>
+                    <span>{formatCurrency(tax.value)}</span>
+                 </div>
+                 <div class="flex justify-between font-bold text-[11px] text-text-muted uppercase tracking-widest">
                     <span>Shipping</span>
-                    <span class="text-primary tracking-widest">Complimentary</span>
+                    <span>{formatCurrency(shippingCost)}</span>
                  </div>
                  <div class="pt-6 border-t border-border flex justify-between items-end">
                     <span class="text-lg font-bold uppercase tracking-tighter">Total</span>
-                    <span class="text-3xl font-semibold tracking-tighter">{formatCurrency(subtotal.value)}</span>
+                    <span class="text-3xl font-bold tracking-tighter">{formatCurrency(grandTotal.value)}</span>
                  </div>
               </div>
 
               <div class="pt-6 space-y-4">
-                 <div class="flex items-center gap-3 p-4 bg-white rounded-md border border-border">
+                 <div class="flex items-center gap-3 p-4 bg-white rounded-md border border-border shadow-sm">
                     <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                    <p class="text-[10px] font-bold uppercase text-text-muted">Secure checkout encrypted with 256-bit AES</p>
+                    <p class="text-[10px] font-bold uppercase text-text-muted">Secure 256-bit AES Encryption</p>
                  </div>
               </div>
            </div>

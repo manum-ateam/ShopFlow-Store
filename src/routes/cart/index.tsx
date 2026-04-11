@@ -1,34 +1,28 @@
-import { component$} from "@builder.io/qwik";
+import { component$ } from "@builder.io/qwik";
 import { Link, type DocumentHead, routeAction$, Form, zod$, z } from "@builder.io/qwik-city";
-import { useCart, type CartItem } from "~/context/cart-context";
+import { useCart } from "~/context/cart-context";
 import { formatCurrency } from "~/lib/utils";
 import { EmptyState } from "~/components/ui/EmptyState";
+import { updateCartItemApi, removeCartItemApi } from "~/lib/api";
 
-// Server-side Cart Management (Works without JS)
-export const useCartAction = routeAction$(async (data, { cookie }) => {
-  const cartCookie = cookie.get('sf_cart');
-  let items: CartItem[] = [];
-  if (cartCookie) {
-    try {
-      items = JSON.parse(decodeURIComponent(cartCookie.value));
-    } catch { items = []; }
-  }
+// Server-side Cart Management
+export const useCartAction = routeAction$(async (data, { cookie, fail }) => {
+  const sessionId = cookie.get('sf_session')?.value;
+  if (!sessionId) return fail(401, { message: "Session expired" });
 
-  if (data.type === "remove") {
-    items = items.filter(i => !(i.id === data.id && i.variantId === data.variantId));
-  } else if (data.type === "update") {
-    const item = items.find(i => i.id === data.id && i.variantId === data.variantId);
-    if (item) {
-      item.quantity = Math.max(1, Math.min(99, data.quantity || 1));
+  try {
+    if (data.type === "remove") {
+      await removeCartItemApi(data.id, sessionId);
+    } else if (data.type === "update") {
+      await updateCartItemApi(data.id, sessionId, data.quantity || 1);
     }
+    return { success: true };
+  } catch (e: any) {
+    return fail(400, { message: e.message });
   }
-
-  cookie.set('sf_cart', JSON.stringify(items), { path: '/', maxAge: 31536000 });
-  return { success: true };
 }, zod$({
   type: z.enum(["update", "remove"]),
-  id: z.string(),
-  variantId: z.string().optional(),
+  id: z.string(), // This is the cartItemId ({productId}-{variantId})
   quantity: z.coerce.number().optional(),
 }));
 
@@ -56,7 +50,7 @@ export default component$(() => {
         {/* Line Items */}
         <div class="lg:col-span-8 space-y-6">
           {state.items.map((item) => (
-            <div key={`${item.id}-${item.variantId}`} class="flex flex-col sm:flex-row gap-8 p-8 bg-surface-dim rounded-[1rem] border border-border group transition-all hover:border-text-muted">
+            <div key={`${item.id}-${item.variantId}`} class="flex flex-col sm:flex-row gap-8 p-8 bg-surface-dim rounded-lg border border-border group transition-all hover:border-text-muted">
               {/* Image */}
               <div class="w-full sm:w-32 aspect-square rounded-lg overflow-hidden bg-white border border-border flex-shrink-0">
                 <img src={item.images[0]} alt={item.name} class="w-full h-full object-cover transition-transform group-hover:scale-105 duration-500" width={128} height={128} />
@@ -77,15 +71,13 @@ export default component$(() => {
                 </div>
 
                 <div class="flex justify-between items-end mt-10">
-                  {/*  Quantity Controls using Form (No-JS Compatible) */}
                   <div class="flex items-center gap-4">
                      <Form action={cartAction} onSubmitCompleted$={() => updateQuantity(item.id, item.quantity - 1, item.variantId)}>
                         <input type="hidden" name="type" value="update" />
-                        <input type="hidden" name="id" value={item.id} />
-                        <input type="hidden" name="variantId" value={item.variantId} />
+                        <input type="hidden" name="id" value={item.cartItemId} />
                         <input type="hidden" name="quantity" value={item.quantity - 1} />
                         <button 
-                          disabled={item.quantity <= 1}
+                          disabled={item.quantity <= 1 || cartAction.isRunning}
                           class="w-10 h-10 flex items-center justify-center rounded-xl border border-border bg-surface-dim disabled:opacity-30 transition-all shadow-sm"
                           aria-label="Decrease"
                         >
@@ -97,11 +89,10 @@ export default component$(() => {
 
                      <Form action={cartAction} onSubmitCompleted$={() => updateQuantity(item.id, item.quantity + 1, item.variantId)}>
                         <input type="hidden" name="type" value="update" />
-                        <input type="hidden" name="id" value={item.id} />
-                        <input type="hidden" name="variantId" value={item.variantId} />
+                        <input type="hidden" name="id" value={item.cartItemId} />
                         <input type="hidden" name="quantity" value={item.quantity + 1} />
                         <button 
-                          disabled={item.quantity >= 99}
+                          disabled={item.quantity >= 99 || cartAction.isRunning}
                           class="w-10 h-10 flex items-center justify-center rounded-xl border border-border bg-surface-dim disabled:opacity-30 transition-all shadow-sm"
                           aria-label="Increase"
                         >
@@ -112,8 +103,7 @@ export default component$(() => {
 
                   <Form action={cartAction} onSubmitCompleted$={() => removeItem(item.id, item.variantId)}>
                     <input type="hidden" name="type" value="remove" />
-                    <input type="hidden" name="id" value={item.id} />
-                    <input type="hidden" name="variantId" value={item.variantId} />
+                    <input type="hidden" name="id" value={item.cartItemId} />
                     <button class="text-[10px] font-black uppercase tracking-[0.2em] text-red-500 hover:text-red-700 transition-colors p-2 underline decoration-2 underline-offset-4">
                       Remove
                     </button>
@@ -126,7 +116,7 @@ export default component$(() => {
 
         {/* Summary Sidebar */}
         <div class="lg:col-span-4 lg:sticky lg:top-32">
-           <div class="bg-surface-dim text-white p-10 rounded-[1rem] shadow-premium">
+           <div class="bg-surface-dim text-white p-10 rounded-lg shadow-premium">
               <h2 class="text-xl font-semibold uppercase tracking-tighter mb-10 ">Summary</h2>
               
               <div class="space-y-6 mb-12">
