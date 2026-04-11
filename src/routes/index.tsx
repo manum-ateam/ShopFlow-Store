@@ -34,7 +34,7 @@ export default component$(() => {
     <>
       <Hero />
       <CategoryNav categories={homeData.value.categories} />
-      <div class="">
+      <>
         {homeData.value.error ? (
           <EmptyState 
             icon="error"
@@ -54,7 +54,7 @@ export default component$(() => {
         ) : (
           <FeaturedProducts products={homeData.value.products} />
         )}
-      </div>
+      </>
     </>
   );
 });
