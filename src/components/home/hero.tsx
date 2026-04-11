@@ -17,7 +17,7 @@ export default component$(() => {
 
       <div class="container-tight w-full relative z-10">
         <div class="max-w-2xl text-white">
-          <h1 class="text-4xl md:text-5xl lg:text-6xl font-semibold mb-8 leading-tight uppercase  tracking-tight">
+          <h1 class="text-4xl md:text-5xl lg:text-6xl font-semibold mb-8 leading-tight uppercase tracking-tight">
             Elevate Your Everyday Essentials.
           </h1>
           <Link href="/products" class="inline-block bg-white text-black px-5 py-2.5 rounded font-semibold text-md hover:bg-primary hover:text-white transition-all transform hover:scale-105 active:scale-95">
