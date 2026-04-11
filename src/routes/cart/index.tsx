@@ -5,7 +5,7 @@ import { formatCurrency } from "~/lib/utils";
 import { EmptyState } from "~/components/ui/EmptyState";
 import { updateCartItemApi, removeCartItemApi } from "~/lib/api";
 
-// 🚀 PRODUCTION SYNC: Server-side Cart Management
+// Server-side Cart Management
 export const useCartAction = routeAction$(async (data, { cookie, fail }) => {
   const sessionId = cookie.get('sf_session')?.value;
   if (!sessionId) return fail(401, { message: "Session expired" });

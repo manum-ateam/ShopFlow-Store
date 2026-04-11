@@ -46,12 +46,12 @@ export const useCheckoutAction = routeAction$(async (data, { redirect, cookie, f
 
   if (data.step === "review") {
     try {
-      // 🚀 PRODUCTION SYNC: Create real checkout session
+      // Create real checkout session
       const result = await createCheckoutSession({
         session_id: sessionId,
-        email: "customer@example.com", // In real app, get from shipping step data
+        email: "customer@example.com", 
         shipping: {
-          address: "123 Main St", // In real app, get from shipping step data
+          address: "123 Main St", 
           city: "San Francisco",
           postal_code: "94105",
           country: "US"
@@ -84,7 +84,7 @@ export default component$(() => {
   
   const currentStep = loc.url.searchParams.get("step") || "shipping";
 
-  // 🏛️ FINANCIAL CALCULATIONS (Per API Spec)
+  // 
   const tax = useComputed$(() => Math.round(subtotal.value * 0.08));
   const shippingCost = 999; // Fixed $9.99
   const grandTotal = useComputed$(() => subtotal.value + tax.value + shippingCost);
