@@ -16,7 +16,6 @@ export const useProduct = routeLoader$(async ({ params, status }) => {
   }
 });
 
-// Call real backend API for cart mutations
 export const useAddToCartAction = routeAction$(async (data, { fail, cookie }) => {
   const sessionId = cookie.get('sf_session')?.value;
   if (!sessionId) return fail(401, { message: "Session expired. Please refresh." });
@@ -37,7 +36,7 @@ export const useAddToCartAction = routeAction$(async (data, { fail, cookie }) =>
       variantName: variant?.name || "Selected option" 
     };
   } catch (e: any) {
-    // 🛡️ API Errors (Out of stock, etc.) are caught and displayed to user
+    // (Out of stock, etc.) are caught and displayed to user
     return fail(400, { message: e.message });
   }
 }, zod$({
