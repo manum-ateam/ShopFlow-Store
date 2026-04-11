@@ -16,7 +16,10 @@ export const FeaturedProducts = component$(({ products }: { products: any[] }) =
           </a>
         </div>
 
-        <div class="grid grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-8 lg:gap-x-8 lg:gap-y-16">
+        <div 
+          style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 320px), 1fr))' }}
+          class="grid gap-x-4 gap-y-8 lg:gap-x-8 lg:gap-y-16"
+        >
           {products.slice(0, 3).map((p) => (
              <ProductCard key={p.id} product={p} />
           ))}

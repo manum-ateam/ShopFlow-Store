@@ -120,7 +120,10 @@ export default component$(() => {
               actionHref="/products"
             />
           ) : (
-            <div class="grid grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-8 lg:gap-x-8 lg:gap-y-16 animate-in fade-in duration-700">
+            <div 
+              style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 280px), 1fr))' }}
+              class="grid gap-x-4 gap-y-8 lg:gap-x-8 lg:gap-y-16 animate-in fade-in duration-700"
+            >
               {data.value.products.map((p) => (
                 <ProductCard key={p.id} product={p} />
               ))}
