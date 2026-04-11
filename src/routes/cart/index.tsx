@@ -21,7 +21,7 @@ export default component$(() => {
 
   return (
     <div class="container-tight py-12 md:py-24 animate-in fade-in duration-700">
-      <h1 class="text-3xl font-semibold mb-12 uppercase tracking-tight">Your Shopping Bag</h1>
+      <h1 class="text-2xl font-medium mb-12 uppercase tracking-tight">Your Shopping Bag</h1>
       
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
         {/* Line Items */}
@@ -49,7 +49,7 @@ export default component$(() => {
 
                 <div class="flex justify-between items-end mt-8">
                   {/* Quantity Controls */}
-                  <div class="flex items-center bg-white rounded-xl border border-border p-1 shadow-sm">
+                  <div class="flex items-center bg-gray-400 rounded-xl border border-border p-1 shadow-sm">
                     <button 
                       onClick$={() => updateQuantity(item.id, item.quantity - 1, item.variantId)}
                       disabled={item.quantity <= 1}
