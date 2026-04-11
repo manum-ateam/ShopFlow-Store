@@ -13,39 +13,31 @@ export interface CartStore {
 
 export const CartContext = createContextId<CartStore>("cart-context");
 
-export const CartProvider = component$(() => {
+interface CartProviderProps {
+  initialItems?: CartItem[];
+}
+
+export const CartProvider = component$((props: CartProviderProps) => {
   const state = useStore<CartStore>({
-    items: [],
+    items: props.initialItems || [],
   });
 
-  useVisibleTask$(() => {
-    const savedCart = localStorage.getItem('shopflow_cart');
-    if (savedCart) {
-      try {
-        state.items = JSON.parse(savedCart);
-      } catch (e) {
-        console.error("Failed to load cart", e);
-      }
-    }
-  });
-
+  // 💾 Sync with Client Storage (Redundancy)
   useVisibleTask$(({ track }) => {
     track(() => state.items);
-    localStorage.setItem('shopflow_cart', JSON.stringify(state.items));
+    localStorage.setItem('sf_cart', JSON.stringify(state.items));
+    document.cookie = `sf_cart=${encodeURIComponent(JSON.stringify(state.items))}; path=/; max-age=31536000; SameSite=Lax`;
   });
 
   useContextProvider(CartContext, state);
 
-  return <Slot  />;
+  return <Slot />;
 });
 
-/**
- * Custom hook to interact with the cart
- */
 export const useCart = () => {
   const state = useContext(CartContext);
 
-  const addItem = $((product: Product, quantity: number = 1, variantId?: string, variantName?: string) => {
+  const addItem = $( (product: Product, quantity: number = 1, variantId?: string, variantName?: string) => {
     const existingItem = state.items.find(item => item.id === product.id && item.variantId === variantId);
     if (existingItem) {
       existingItem.quantity = Math.min(99, existingItem.quantity + quantity);
