@@ -1,32 +1,29 @@
-import { createContextId, useContext, useStore, component$, Slot, useContextProvider, $, useComputed$, useVisibleTask$ } from "@builder.io/qwik";
+import { createContextId, useContext, useStore, component$, Slot, useContextProvider, $, useComputed$ } from "@builder.io/qwik";
 import type { Product } from "~/types/prodcuts";
 
 export interface CartItem extends Product {
   quantity: number;
   variantId?: string;
   variantName?: string;
+  cartItemId?: string; // Format: {productId}-{variantId}
 }
 
 export interface CartStore {
   items: CartItem[];
+  sessionId: string;
 }
 
 export const CartContext = createContextId<CartStore>("cart-context");
 
 interface CartProviderProps {
   initialItems?: CartItem[];
+  sessionId?: string;
 }
 
 export const CartProvider = component$((props: CartProviderProps) => {
   const state = useStore<CartStore>({
     items: props.initialItems || [],
-  });
-
-  // 💾 Sync with Client Storage (Redundancy)
-  useVisibleTask$(({ track }) => {
-    track(() => state.items);
-    localStorage.setItem('sf_cart', JSON.stringify(state.items));
-    document.cookie = `sf_cart=${encodeURIComponent(JSON.stringify(state.items))}; path=/; max-age=31536000; SameSite=Lax`;
+    sessionId: props.sessionId || "",
   });
 
   useContextProvider(CartContext, state);
@@ -37,7 +34,7 @@ export const CartProvider = component$((props: CartProviderProps) => {
 export const useCart = () => {
   const state = useContext(CartContext);
 
-  const addItem = $( (product: Product, quantity: number = 1, variantId?: string, variantName?: string) => {
+  const addItem = $((product: Product, quantity: number = 1, variantId?: string, variantName?: string) => {
     const existingItem = state.items.find(item => item.id === product.id && item.variantId === variantId);
     if (existingItem) {
       existingItem.quantity = Math.min(99, existingItem.quantity + quantity);
@@ -46,7 +43,8 @@ export const useCart = () => {
         ...product, 
         quantity: Math.min(99, quantity),
         variantId,
-        variantName
+        variantName,
+        cartItemId: `${product.id}-${variantId}`
       });
     }
   });
