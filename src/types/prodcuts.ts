@@ -1,13 +1,24 @@
+export interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  product_count?: number;
+}
+
 export interface Product {
   id: string;
-  title: string;
-  price: number; // cents
+  name: string;
+  title?: string; 
+  description: string;
+  price: number; 
   images: string[];
-  variants: Variant[];
+  category?: string;
+  variants?: Variant[];
 }
 
 export interface Variant {
   id: string;
   name: string;
-  stock: number;
+  price?: number;
+  inventory: number;
 }
