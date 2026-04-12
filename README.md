@@ -4,7 +4,7 @@ A production-grade, ultra-high-performance e-commerce storefront built with **Qw
 
 ---
 
-## The Resumability Test (Core Assignment Requirement)
+## The Resumability Test
 
 Unlike traditional frameworks (React/Next.js) that require Hydration, ShopFlow serializes its state into the HTML. The browser downloads **zero** component logic until the moment of interaction.
 
@@ -28,8 +28,6 @@ Unlike traditional frameworks (React/Next.js) that require Hydration, ShopFlow s
 - **Tailwind v4**: CSS-first architecture using modern tokens and **Container Queries** (`@container`).
 
 ---
-
-## Architecture & Technical Decisions
 
 ### Resumability vs. Hydration
 
