@@ -1,17 +1,10 @@
 import { component$, Slot } from "@builder.io/qwik";
-import { routeLoader$, type RequestHandler, useLocation } from "@builder.io/qwik-city";
+import { routeLoader$, useLocation } from "@builder.io/qwik-city";
 import { Footer } from "~/components/layout/Footer";
 import { Header } from "~/components/layout/Header";
 import { CartProvider } from "~/context/cart-context";
 import { EnvProvider, useEnv } from "~/context/env-context";
 import { getCart } from "~/lib/api";
-
-export const onGet: RequestHandler = async ({ cacheControl }) => {
-  cacheControl({
-    staleWhileRevalidate: 60 * 60 * 24 * 7,
-    maxAge: 5,
-  });
-};
 
 //  Fetch data on the server (Live API Cart)
 export const useCartLoader = routeLoader$(async ({ cookie }) => {

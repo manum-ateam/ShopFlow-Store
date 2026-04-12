@@ -1,8 +1,7 @@
-import { component$, useSignal, $ } from "@builder.io/qwik";
+import { component$, useSignal} from "@builder.io/qwik";
 import { routeLoader$, Form, type DocumentHead, Link } from "@builder.io/qwik-city";
 import { getProductById } from "~/lib/api";
 import { formatCurrency } from "~/lib/utils";
-import { useCart } from "~/context/cart-context";
 import { useAddToCartAction } from "./actions";
 import type { Product } from "~/types/products";
 
@@ -22,7 +21,6 @@ export default component$(() => {
   const productSignal = useProduct();
   const addToCartAction = useAddToCartAction();
   const selectedVariantId = useSignal("");
-  const { addItem } = useCart();
 
   if (!productSignal.value) {
     return (
@@ -41,12 +39,6 @@ export default component$(() => {
   const activeVariant = product.variants?.find((v) => v.id === activeVariantId) || product.variants?.[0];
 
   const formattedPrice = formatCurrency(activeVariant?.price || product.price || 0);
-
-  const handleSuccess = $(() => {
-    if (addToCartAction.value?.success) {
-      addItem(product, 1, activeVariantId, activeVariant?.name);
-    }
-  });
 
   return (
     <div class="container-tight py-12 md:py-24 animate-in fade-in duration-1000">
@@ -76,7 +68,7 @@ export default component$(() => {
             {product.description}
           </p>
 
-          <Form action={addToCartAction} onSubmitCompleted$={handleSuccess}>
+          <Form action={addToCartAction}>
             <input type="hidden" name="productId" value={product.id} />
             <input type="hidden" name="variantId" value={activeVariantId} />
             <input type="hidden" name="quantity" value={1} />
@@ -108,6 +100,7 @@ export default component$(() => {
 
             <div class="space-y-4">
               <button
+                onClick$={() => console.log("Processing bag addition...")}
                 disabled={!activeVariant || (activeVariant?.inventory ?? 0) <= 0 || addToCartAction.isRunning}
                 class="bg-black text-white px-10 py-5 rounded-md font-bold uppercase tracking-widest text-[15px] bg-primary transition-all w-full disabled:opacity-50 disabled:cursor-not-allowed min-h-[60px] shadow-premium flex items-center justify-center gap-3 active:scale-[0.98]"
               >

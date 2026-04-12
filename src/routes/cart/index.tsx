@@ -9,7 +9,7 @@ import CartItem from "~/components/cart/CartItem";
 export { useCartAction };
 
 export default component$(() => {
-  const { state, removeItem, subtotal } = useCart();
+  const { state, subtotal } = useCart();
   const cartAction = useCartAction();
 
   if (state.items.length === 0) {
@@ -42,7 +42,7 @@ export default component$(() => {
                 // or optimistically update if needed.
               })}
               onRemove$={$(() => {
-                 removeItem(item.id, item.variantId);
+                // UI will refresh automatically via the routeAction
               })}
             />
           ))}

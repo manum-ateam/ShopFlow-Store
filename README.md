@@ -1,39 +1,39 @@
 # ShopFlow Storefront
 
-A production-grade e-commerce storefront built with **Qwik.js**, **Qwik City**, and **Tailwind CSS v4**.
+A production-grade, ultra-high-performance e-commerce storefront built with **Qwik.js**, **Qwik City**, and **Tailwind CSS v4**. This project is engineered for **Zero Hydration**, achieving near-instant interactivity by leveraging Qwik's unique Resumability architecture.
 
-## Overview
+---
 
-## The Resumability Test (Non-Negotiable)
+## The Resumability Test (Core Assignment Requirement)
 
-Unlike React, Vue, or Svelte, ShopFlow does not "hydrate." It serializes the application state into the HTML and resumes execution only when a user interacts.
+Unlike traditional frameworks (React/Next.js) that require Hydration, ShopFlow serializes its state into the HTML. The browser downloads **zero** component logic until the moment of interaction.
 
 ### 1. Initial Page Load (Before Interaction)
-**Result**: ~2.8kb of JavaScript (Bootstrap only). No component logic or framework overhead is downloaded yet.
-![Initial Load Network Tab](path/to/your/screenshot_initial.png)
+**Result**: 
+![Initial Load Network Tab] 
 
 ### 2. After First Interaction (Clicking "Add to Bag")
-**Result**: Only the specific chunk for the `onClick$` handler is downloaded and executed at the moment of the click.
-![Post Interaction Network Tab](path/to/your/screenshot_interaction.png)
+**Result**: 
+![Post Interaction Network Tab]
 
 ---
 
 ## Key Features
 
-- **🛍️ Full E-commerce Flow**: Dynamic product grid, detail pages with variant selection, and a persistent shopping bag.
-- **🛡️ Progressive Enhancement**: Adding items to the cart and the multi-step checkout form work **without JavaScript** using Qwik City `routeAction$` and `Form`.
-- **📦 Library SDK**: Headless component library (`@shopflow/ui`) with ESM/CJS exports and React-compatible wrappers via `qwikify$`.
-- **📱 Multi-Context Adaptation**: Automatically detects and adapts layout for `Standalone`, `Iframe`, and `WebView` environments.
-- **🔗 Bridge API**: Native `postMessage` integration for host apps to track cart and checkout events.
-- **🎨 Tailwind v4**: CSS-first design system with container queries (`@container`) for truly responsive components.
+- **Full E-commerce Flow**: Advanced product grids, variant management, and persistent cart state.
+- **Progressive Enhancement**: All critical paths (Add to Cart, Checkout) work **without JavaScript** enabled.
+- **@shopflow/ui Library**: Reusable SDK with ESM/CJS exports and **React-compatible wrappers** via `qwikify$`.
+- **Environment Awareness**: Auto-adapting layouts for **Standalone**, **Iframe**, and **WebView** contexts.
+- **Bridge API**: Native communication via `postMessage` for host app event synchronization.
+- **Tailwind v4**: CSS-first architecture using modern tokens and **Container Queries** (`@container`).
 
 ---
 
 ## Architecture & Technical Decisions
 
-### Resumability vs. Hydration (Senior Explanation)
+### Resumability vs. Hydration
 
-**Resumability** is the ability for an application to stay "paused" on the server and "resume" in the browser exactly where it left off, without re-executing the component tree. In a traditional React app, even if the HTML is server-rendered, the browser must **Hydrate**: it downloads the entire JS bundle, executes all components, and attaches event listeners before the page becomes interactive.
+**Resumability** is the ability for an application to stay "paused" on the server and "resume" in the browser exactly where it left off, without re-executing the component tree. In a traditional React app, the browser must **Hydrate**: it downloads the entire JS bundle, executes all components, and attaches event listeners before the page becomes interactive.
 
 In **ShopFlow**, we utilize Qwik's fine-grained protocol:
 1. **Serialization**: Every piece of state (using `useStore`) is converted to JSON and embedded in the HTML.
@@ -42,8 +42,8 @@ In **ShopFlow**, we utilize Qwik's fine-grained protocol:
 **Example from this code**: Our `CartProvider` (at `src/context/cart-context.tsx`) manages the global bag state. When a user navigates from the Homepage to a Product page, no JS is transferred. The cart count in the header updates immediately upon interaction because only the `addItem` chunk is pulled from the CDN on-demand.
 
 ### Rendering Strategy
-- **Product Listing (/products)**: Parallel fetching of products and categories via `routeLoader$` to prevent waterfall delays.
-- **Optimization**: All heavy React-related dependencies are isolated in `devDependencies` and only bundled within the secondary library build (`pkg/`), ensuring the main storefront remains ultra-light.
+- **Parallel Fetching**: We use `routeLoader$` to fetch categories and products simultaneously on the server, avoiding request waterfalls.
+- **Bundle Optimization**: All React-related dependencies are isolated to the Library build (`pkg/`), ensuring the main Storefront remains pure Qwik and ultra-light.
 
 ---
 
@@ -52,53 +52,75 @@ In **ShopFlow**, we utilize Qwik's fine-grained protocol:
 ```text
 ShopFlow/
 ├── src/
-│   ├── routes/              # Qwik City Directory Routing
-│   │   ├── cart/            # Shopping bag logic
-│   │   ├── checkout/        # Multi-step mutation form
+│   ├── routes/              # Qwik City File-based Routing
+│   │   ├── cart/            # Bag management logic
+│   │   ├── checkout/        # Multi-step mutation forms
 │   │   ├── embed/           # WebView & Iframe layouts
-│   │   └── layout.tsx       # Global state & Env Provider
-│   ├── components/          # Reusable Qwik UI components
-│   ├── context/             # Serializable state (Cart/Env)
-│   ├── lib/                 # API Client, Utils, & Bridge SDK
-│   └── global.css           # Tailwind v4 Theme Tokens
+│   │   └── layout.tsx       # State Providers & Session Mgmt
+│   ├── components/          # Reusable Qwik UI Components
+│   ├── context/             # Serializable Global State
+│   ├── lib/                 # API Client & Bridge SDK
+│   └── global.css           # Tailwind v4 Design Tokens
 ├── pkg/                     # (Build Output) React-compatible Library
 └── dist/                    # (Build Output) Production App
+```
+
+---
 
 ## SDK Usage (React Integration)
+
 Our components are publishable as a standalone library. To use them in a React project:
 
+```tsx
 import { ProductCard } from '@shopflow/ui/react';
 
 export const MyPage = () => (
   <ProductCard 
     product={mockProduct} 
-    client:hover  // Lazy-loads only on hover
+    client:hover  // Code only loads when the user hovers!
   />
 );
+```
 
-## Getting Started
+---
 
-Prerequisites
-- Node.js 20+
-- npm/pnpm
+##  Getting Started
 
-## Installation
-``bash
--npm install
--Development
+### Prerequisites
+- **Node.js**: 20.0 or higher
+- **Package Manager**: npm or pnpm
 
-``bash
--npm run dev
--Production Build & Preview
+### Installation
+```bash
+npm install
+```
 
-``bash
--npm run build
--npm run preview
+### Development
+```bash
+npm run dev
+```
 
-## Performance Metrics (Lighthouse)
+### Production Build & Preview
+```bash
+# Builds both the Storefront (dist/) and the Library (pkg/)
+npm run build
 
-Performance: 99+
-Accessibility: 100
-Best Practices: 100
-SEO: 100
-Time to Interactive: < 0.8s (on mobile)
+# Preview the production storefront
+npm run preview
+```
+
+---
+
+##  Performance Metrics (Lighthouse)
+![alt text](image-1.png)
+
+- **Performance**: 63+
+- **Accessibility**: 93
+- **Best Practices**: 100
+- **SEO**: 100
+- **Time to Interactive**: < 0.8s (Mobile)
+
+---
+
+## License
+MIT

@@ -9,14 +9,14 @@ const handleResponse = async (r: Response) => {
   return json.data;
 };
 
-// 🏛️ Categories & Products
+// Categories & Products
 export const getCategories = () => fetch(`${BASE_URL}/api/categories`).then(handleResponse);
 export const getProducts = (query?: string) => fetch(`${BASE_URL}/api/products${query || ""}`).then(handleResponse);
 export const getProductById = (id: string) => fetch(`${BASE_URL}/api/products/${id}`).then(handleResponse);
 export const getFeaturedProducts = () => fetch(`${BASE_URL}/api/products/featured`).then(handleResponse);
 export const searchProducts = (q: string) => fetch(`${BASE_URL}/api/search?q=${encodeURIComponent(q)}`).then(handleResponse);
 
-// 🛒 Remote Cart Management
+// Remote Cart Management
 export const getCart = (sessionId: string) => 
   fetch(`${BASE_URL}/api/cart?session_id=${sessionId}`).then(handleResponse);
 
@@ -39,7 +39,7 @@ export const removeCartItemApi = (itemId: string, sessionId: string) =>
     method: "DELETE",
   }).then(handleResponse);
 
-// 💳 Real Checkout Fulfillment
+// Real Checkout Fulfillment
 export const createCheckoutSession = (data: any) => 
   fetch(`${BASE_URL}/api/checkout/session`, {
     method: "POST",
