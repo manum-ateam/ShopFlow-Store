@@ -31,6 +31,13 @@ export default defineConfig(() => {
         },
       },
     },
-    plugins: [tailwindcss(), qwikVite(), tsconfigPaths()],
+    plugins: [
+      tailwindcss(), 
+      qwikVite({
+        // Ensuring the library build is isolated
+        srcDir: resolve(__dirname, "src"),
+      }), 
+      tsconfigPaths()
+    ],
   };
 });
