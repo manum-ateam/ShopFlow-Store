@@ -18,7 +18,7 @@
     }
   },
   "scripts": {
-    "build": "qwik build",
+    "build": "qwik build && npm run build.lib",
     "build.client": "vite build",
     "build.preview": "vite build --ssr src/entry.preview.tsx",
     "build.server": "qwik check-client src dist && vite build -c adapters/vercel-edge/vite.config.ts",
