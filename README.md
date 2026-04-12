@@ -31,7 +31,7 @@ Unlike traditional frameworks (React/Next.js) that require Hydration, ShopFlow s
 
 ## Architecture & Technical Decisions
 
-### Resumability vs. Hydration (Senior Explanation)
+### Resumability vs. Hydration
 
 **Resumability** is the ability for an application to stay "paused" on the server and "resume" in the browser exactly where it left off, without re-executing the component tree. In a traditional React app, the browser must **Hydrate**: it downloads the entire JS bundle, executes all components, and attaches event listeners before the page becomes interactive.
 
