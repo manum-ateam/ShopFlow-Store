@@ -10,7 +10,8 @@ Unlike traditional frameworks (React/Next.js) that require Hydration, ShopFlow s
 
 ### 1. Initial Page Load (Before Interaction)
 **Result**: 
-![Initial Load Network Tab] ![alt text](image.png)
+<img width="1796" height="993" alt="image" src="https://github.com/user-attachments/assets/bab57248-f45f-467c-a61a-505432d590c3" />
+
 
 ### 2. After First Interaction (Clicking "Add to Bag")
 **Result**: 
