@@ -20,6 +20,7 @@ export default function (opts: RenderToStreamOptions) {
   return renderToStream(<Root />, {
     ...opts,
     // Use container attributes to set attributes on the html tag.
+    prefetchStrategy: null,
     containerAttributes: {
       lang: "en-us",
       ...opts.containerAttributes,
