@@ -1,8 +1,9 @@
-import { component$, useComputed$ } from "@builder.io/qwik";
+import { component$, useComputed$, useVisibleTask$ } from "@builder.io/qwik";
 import { Form, type DocumentHead, useLocation, Link } from "@builder.io/qwik-city";
 import { useCart } from "~/context/cart-context";
 import { formatCurrency } from "~/lib/utils";
 import { useCheckoutAction } from "./actions";
+import { emitShopFlowEvent } from "~/lib/bridge";
 
 export { useCheckoutAction };
 
@@ -11,6 +12,11 @@ export default component$(() => {
   const checkoutAction = useCheckoutAction();
   const { state: cart, subtotal } = useCart();
   
+  // eslint-disable-next-line qwik/no-use-visible-task
+  useVisibleTask$(() => {
+    emitShopFlowEvent({ type: 'CHECKOUT_STARTED', payload: { sessionId: cart.sessionId } });
+  });
+
   const currentStep = loc.url.searchParams.get("step") || "shipping";
 
   const tax = useComputed$(() => Math.round(subtotal.value * 0.08));

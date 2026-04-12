@@ -1,7 +1,7 @@
 import { routeAction$, zod$, z } from "@builder.io/qwik-city";
 import { createCheckoutSession } from "~/lib/api";
 
-// 🔒 PRIVATE SCHEMAS (Server-Only)
+// PRIVATE SCHEMAS (Server-Only)
 const shippingSchema = z.object({
   step: z.literal("shipping"),
   email: z.string().email("Please enter a valid email address"),
@@ -29,6 +29,7 @@ const checkoutSchema = z.discriminatedUnion("step", [
   reviewSchema,
 ]);
 
+// eslint-disable-next-line qwik/loader-location
 export const useCheckoutAction = routeAction$(async (data, { redirect, cookie, fail }) => {
   const sessionId = cookie.get('sf_session')?.value;
   if (!sessionId) return fail(401, { message: "Session expired" });

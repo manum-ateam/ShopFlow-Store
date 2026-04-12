@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./pkg/types",
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "rootDir": "src",
+    "types": ["node"],
+    "jsx": "react-jsx",
+    "jsxImportSource": "@builder.io/qwik"
+  },
+  "include": ["src/lib", "src/components", "src/types"],
+  "exclude": ["src/routes"]
+}

@@ -1,4 +1,4 @@
-import { component$ } from "@builder.io/qwik";
+import { component$, useStyles$ } from "@builder.io/qwik";
 import { Link } from "@builder.io/qwik-city";
 
 interface CategoryNavProps {
@@ -11,6 +11,16 @@ interface CategoryNavProps {
 }
 
 export const CategoryNav = component$((props: CategoryNavProps) => {
+  useStyles$(`
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  `);
+
   return (
     <section class="py-8 bg-surface border-b border-border sticky top-20 z-40 glass">
       <div class="container-tight">
@@ -46,16 +56,6 @@ export const CategoryNav = component$((props: CategoryNavProps) => {
           </div>
         </div>
       </div>
-
-      <style>{`
-        .no-scrollbar::-webkit-scrollbar {
-          display: none;
-        }
-        .no-scrollbar {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-      `}</style>
     </section>
   );
 });

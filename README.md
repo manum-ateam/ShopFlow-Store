@@ -1,8 +1,8 @@
 # ShopFlow Storefront
 
-A production-grade, ultra-high-performance e-commerce storefront built with **Qwik.js**, **Qwik City**, and **Tailwind CSS v4**. This project demonstrates the power of **Resumability**—achieving near-zero client-side JavaScript execution on initial load and progressive enhancement that works even with JavaScript disabled.
+A production-grade e-commerce storefront built with **Qwik.js**, **Qwik City**, and **Tailwind CSS v4**.
 
----
+## Overview
 
 ## The Resumability Test (Non-Negotiable)
 
