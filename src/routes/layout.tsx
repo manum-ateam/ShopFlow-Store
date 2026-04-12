@@ -1,17 +1,12 @@
 import { component$, Slot } from "@builder.io/qwik";
-import { routeLoader$, type RequestHandler } from "@builder.io/qwik-city";
+import { routeLoader$, type RequestHandler, useLocation } from "@builder.io/qwik-city";
 import { Footer } from "~/components/layout/Footer";
 import { Header } from "~/components/layout/Header";
 import { CartProvider } from "~/context/cart-context";
+import { EnvProvider, useEnv } from "~/context/env-context";
 import { getCart } from "~/lib/api";
 
-export const onGet: RequestHandler = async ({ cacheControl, cookie }) => {
-  //  Generate a session ID if it doesn't exist
-  if (!cookie.get('sf_session')) {
-    const sessionId = `sf_${Math.random().toString(36).substring(2, 15)}`;
-    cookie.set('sf_session', sessionId, { path: '/', maxAge: 31536000 });
-  }
-
+export const onGet: RequestHandler = async ({ cacheControl }) => {
   cacheControl({
     staleWhileRevalidate: 60 * 60 * 24 * 7,
     maxAge: 5,
@@ -20,8 +15,11 @@ export const onGet: RequestHandler = async ({ cacheControl, cookie }) => {
 
 //  Fetch data on the server (Live API Cart)
 export const useCartLoader = routeLoader$(async ({ cookie }) => {
-  const sessionId = cookie.get('sf_session')?.value;
-  if (!sessionId) return { items: [], subtotal: 0, sessionId: "" };
+  let sessionId = cookie.get('sf_session')?.value;
+  if (!sessionId) {
+    sessionId = `sf_${Math.random().toString(36).substring(2, 15)}`;
+    cookie.set('sf_session', sessionId, { path: '/', maxAge: 31536000 });
+  }
 
   try {
     const cartData = await getCart(sessionId);
@@ -47,18 +45,32 @@ export const useCartLoader = routeLoader$(async ({ cookie }) => {
   }
 });
 
-export default component$(( ) => {
+export default component$(() => {
   const cartData = useCartLoader();
 
   return (
     <CartProvider initialItems={cartData.value.items} sessionId={cartData.value.sessionId}>
-      <div class="flex flex-col min-h-screen pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] pr-[env(safe-area-inset-right)] pl-[env(safe-area-inset-left)]">
-        <Header />
-        <main class="flex-1">
+      <EnvProvider>
+        <LayoutContent>
           <Slot />
-        </main>
-        <Footer />
-      </div>
+        </LayoutContent>
+      </EnvProvider>
     </CartProvider>
+  );
+});
+
+const LayoutContent = component$(() => {
+  const env = useEnv();
+  const loc = useLocation();
+  const isEmbed = loc.url.pathname.startsWith('/embed');
+
+  return (
+    <div class={`flex flex-col min-h-screen ${env.isWebView ? 'webview-mode' : ''} pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] pr-[env(safe-area-inset-right)] pl-[env(safe-area-inset-left)]`}>
+      {!isEmbed && env.isStandalone && <Header />}
+      <main class="flex-1">
+        <Slot />
+      </main>
+      {!isEmbed && env.isStandalone && <Footer />}
+    </div>
   );
 });

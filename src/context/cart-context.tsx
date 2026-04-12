@@ -1,5 +1,6 @@
-import { createContextId, useContext, useStore, component$, Slot, useContextProvider, $, useComputed$ } from "@builder.io/qwik";
-import type { Product } from "~/types/prodcuts";
+import { createContextId, useContext, useStore, component$, Slot, useContextProvider, $, useComputed$, useTask$ } from "@builder.io/qwik";
+import type { Product } from "~/types/products";
+import { emitShopFlowEvent } from "~/lib/bridge";
 
 export interface CartItem extends Product {
   quantity: number;
@@ -26,6 +27,14 @@ export const CartProvider = component$((props: CartProviderProps) => {
     sessionId: props.sessionId || "",
   });
 
+  // Sync state with server-side data on navigation
+  useTask$(({ track }) => {
+    track(() => props.initialItems);
+    if (props.initialItems) {
+      state.items = [...props.initialItems];
+    }
+  });
+
   useContextProvider(CartContext, state);
 
   return <Slot />;
@@ -39,24 +48,39 @@ export const useCart = () => {
     if (existingItem) {
       existingItem.quantity = Math.min(99, existingItem.quantity + quantity);
     } else {
-      state.items.push({ 
-        ...product, 
+      state.items.push({
+        ...product,
         quantity: Math.min(99, quantity),
         variantId,
         variantName,
         cartItemId: `${product.id}-${variantId}`
       });
     }
+
+    emitShopFlowEvent({
+      type: 'ITEM_ADDED',
+      payload: { productId: product.id, variantId, quantity }
+    });
   });
 
   const removeItem = $((productId: string, variantId?: string) => {
     state.items = state.items.filter(item => !(item.id === productId && item.variantId === variantId));
+
+    emitShopFlowEvent({
+      type: 'ITEM_REMOVED',
+      payload: { productId, variantId }
+    });
   });
 
   const updateQuantity = $((productId: string, quantity: number, variantId?: string) => {
     const item = state.items.find(item => item.id === productId && item.variantId === variantId);
     if (item) {
       item.quantity = Math.max(1, Math.min(99, quantity));
+
+      emitShopFlowEvent({
+        type: 'QUANTITY_UPDATED',
+        payload: { productId, variantId, quantity: item.quantity }
+      });
     }
   });
 

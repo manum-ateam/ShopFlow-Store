@@ -1,6 +1,7 @@
 import { routeAction$, zod$, z } from "@builder.io/qwik-city";
 import { addToCartApi, getProductById } from "~/lib/api";
 
+// eslint-disable-next-line qwik/loader-location
 export const useAddToCartAction = routeAction$(async (data, { fail, cookie }) => {
   const sessionId = cookie.get('sf_session')?.value;
   if (!sessionId) return fail(401, { message: "Session expired. Please refresh." });

@@ -1,8 +1,8 @@
-/** Formats a price in cents into a localized INR string. */
+/** Formats a price in cents into a localized USD string. */
 export const formatCurrency = (amountInCents: number): string => {
-  return new Intl.NumberFormat('en-IN', {
+  return new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: 'INR',
+    currency: 'USD',
   }).format((amountInCents || 0) / 100);
 };
 
