@@ -100,6 +100,7 @@ export default component$(() => {
 
             <div class="space-y-4">
               <button
+                onClick$={() => console.log("Processing bag addition...")}
                 disabled={!activeVariant || (activeVariant?.inventory ?? 0) <= 0 || addToCartAction.isRunning}
                 class="bg-black text-white px-10 py-5 rounded-md font-bold uppercase tracking-widest text-[15px] bg-primary transition-all w-full disabled:opacity-50 disabled:cursor-not-allowed min-h-[60px] shadow-premium flex items-center justify-center gap-3 active:scale-[0.98]"
               >
