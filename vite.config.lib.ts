@@ -32,12 +32,8 @@ export default defineConfig(() => {
       },
     },
     plugins: [
-      tailwindcss(), 
-      qwikVite({
-        // Ensuring the library build is isolated
-        srcDir: resolve(__dirname, "src"),
-        vendorRoots: [resolve(__dirname, "src/lib")],
-      }), 
+      qwikVite(),
+      tailwindcss(),
       tsconfigPaths()
     ],
   };

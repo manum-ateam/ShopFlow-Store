@@ -1,7 +1,7 @@
 import { component$ } from "@builder.io/qwik";
 import { Link } from "@builder.io/qwik-city";
-import { formatCurrency } from "~/lib/utils";
-import type { Product } from "~/types/products";
+import { formatCurrency } from "../../lib/utils";
+import type { Product } from "../../types/products";
 
 export interface ProductCardProps {
   product: Product;
