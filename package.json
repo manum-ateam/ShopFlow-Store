@@ -8,16 +8,6 @@
   "engines-annotation": "Mostly required by sharp which needs a Node-API v9 compatible runtime",
   "private": false,
   "type": "module",
-  "main": "./pkg/index.cjs.js",
-  "module": "./pkg/index.es.js",
-  "types": "./pkg/types/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./pkg/types/index.d.ts",
-      "import": "./pkg/index.es.js",
-      "require": "./pkg/index.cjs.js"
-    }
-  },
   "files": [
     "pkg/"
   ],
