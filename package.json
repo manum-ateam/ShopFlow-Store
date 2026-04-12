@@ -9,7 +9,7 @@
   "private": false,
   "type": "module",
   "files": [
-    "src/"
+    "pkg/"
   ],
   "scripts": {
     "build": "qwik build && npm run build.lib",
