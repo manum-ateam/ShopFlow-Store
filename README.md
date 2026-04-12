@@ -4,17 +4,17 @@ A production-grade, ultra-high-performance e-commerce storefront built with **Qw
 
 ---
 
-## The Resumability Test (Core Assignment Requirement)
+## The Resumability Test
 
 Unlike traditional frameworks (React/Next.js) that require Hydration, ShopFlow serializes its state into the HTML. The browser downloads **zero** component logic until the moment of interaction.
 
 ### 1. Initial Page Load (Before Interaction)
 **Result**: 
-![Initial Load Network Tab] 
+![Initial Load Network Tab] ![alt text](image.png)
 
 ### 2. After First Interaction (Clicking "Add to Bag")
 **Result**: 
-![Post Interaction Network Tab]
+![Post Interaction Network Tab]![alt text](image-1.png)
 
 ---
 
@@ -28,8 +28,6 @@ Unlike traditional frameworks (React/Next.js) that require Hydration, ShopFlow s
 - **Tailwind v4**: CSS-first architecture using modern tokens and **Container Queries** (`@container`).
 
 ---
-
-## Architecture & Technical Decisions
 
 ### Resumability vs. Hydration
 
@@ -67,23 +65,6 @@ ShopFlow/
 
 ---
 
-## SDK Usage (React Integration)
-
-Our components are publishable as a standalone library. To use them in a React project:
-
-```tsx
-import { ProductCard } from '@shopflow/ui/react';
-
-export const MyPage = () => (
-  <ProductCard 
-    product={mockProduct} 
-    client:hover  // Code only loads when the user hovers!
-  />
-);
-```
-
----
-
 ##  Getting Started
 
 ### Prerequisites
@@ -112,13 +93,12 @@ npm run preview
 ---
 
 ##  Performance Metrics (Lighthouse)
-![alt text](image-1.png)
+![alt text](image-2.png)
 
-- **Performance**: 63+
+- **Performance**: 77+
 - **Accessibility**: 93
 - **Best Practices**: 100
 - **SEO**: 100
-- **Time to Interactive**: < 0.8s (Mobile)
 
 ---
 
