@@ -1,11 +1,12 @@
 {
-  "name": "my-qwik-empty-starter",
+  "name": "@shopflow/ui",
+  "version": "1.0.0",
   "description": "Blank project with routing included",
   "engines": {
     "node": "^18.17.0 || ^20.3.0 || >=21.0.0"
   },
   "engines-annotation": "Mostly required by sharp which needs a Node-API v9 compatible runtime",
-  "private": true,
+  "private": false,
   "type": "module",
   "main": "./pkg/index.cjs.js",
   "module": "./pkg/index.es.js",
@@ -17,6 +18,9 @@
       "require": "./pkg/index.cjs.js"
     }
   },
+  "files": [
+    "pkg/"
+  ],
   "scripts": {
     "build": "qwik build && npm run build.lib",
     "build.client": "vite build",
