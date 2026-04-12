@@ -10,10 +10,12 @@ export default defineConfig(() => {
       outDir: "pkg",
       target: "es2022",
       lib: {
-        entry: resolve(__dirname, "src/lib/index.ts"),
-        name: "ShopFlowUI",
+        entry: {
+          index: resolve(__dirname, "src/lib/index.ts"),
+          react: resolve(__dirname, "src/lib/react-wrappers.tsx"),
+        },
         formats: ["es", "cjs"],
-        fileName: (format) => `index.${format}.js`,
+        fileName: (format, entryName) => `${entryName}.${format === 'es' ? 'mjs' : 'cjs'}`,
       },
       rollupOptions: {
         external: [
@@ -23,16 +25,12 @@ export default defineConfig(() => {
           "react",
           "react-dom",
         ],
-        output: {
-          globals: {
-            "@builder.io/qwik": "qwik",
-            "react": "React",
-          },
-        },
       },
     },
     plugins: [
-      qwikVite(),
+      qwikVite({
+        vendorRoots: [resolve(__dirname, 'src/components')],
+      }),
       tailwindcss(),
       tsconfigPaths()
     ],

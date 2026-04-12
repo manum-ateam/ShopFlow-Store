@@ -3,7 +3,7 @@ import { routeLoader$, useLocation } from "@builder.io/qwik-city";
 import { Footer } from "~/components/layout/Footer";
 import { Header } from "~/components/layout/Header";
 import { CartProvider } from "~/context/cart-context";
-import { EnvProvider, useEnv } from "~/context/env-context";
+import { EnvProvider } from "~/context/env-context";
 import { getCart } from "~/lib/api";
 
 //  Fetch data on the server (Live API Cart)
@@ -38,32 +38,39 @@ export const useCartLoader = routeLoader$(async ({ cookie }) => {
   }
 });
 
+export const useEnvLoader = routeLoader$(({ request, url }) => {
+  const userAgent = request.headers.get('user-agent') || '';
+  const secFetchDest = request.headers.get('sec-fetch-dest') || '';
+  
+  const isWebView = /(iPhone|iPod|iPad).*AppleWebKit(?!.*Safari)|Android.*(wv|\.0\.0\.0)/.test(userAgent);
+  const isIframe = secFetchDest === 'iframe' || url.searchParams.get('iframe') === '1';
+  
+  return {
+    isIframe,
+    isWebView,
+    isStandalone: !isIframe && !isWebView
+  };
+});
+
 export default component$(() => {
   const cartData = useCartLoader();
+  const envData = useEnvLoader();
+  const loc = useLocation();
+
+  const isEmbed = loc.url.pathname.startsWith('/embed');
+  const env = envData.value;
 
   return (
     <CartProvider initialItems={cartData.value.items} sessionId={cartData.value.sessionId}>
-      <EnvProvider>
-        <LayoutContent>
-          <Slot />
-        </LayoutContent>
+      <EnvProvider initialState={env}>
+        <div class={`flex flex-col min-h-screen ${env.isWebView ? 'webview-mode' : ''} pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] pr-[env(safe-area-inset-right)] pl-[env(safe-area-inset-left)]`}>
+          {!isEmbed && env.isStandalone && <Header />}
+          <main class="flex-1">
+            <Slot />
+          </main>
+          {!isEmbed && env.isStandalone && <Footer />}
+        </div>
       </EnvProvider>
     </CartProvider>
-  );
-});
-
-const LayoutContent = component$(() => {
-  const env = useEnv();
-  const loc = useLocation();
-  const isEmbed = loc.url.pathname.startsWith('/embed');
-
-  return (
-    <div class={`flex flex-col min-h-screen ${env.isWebView ? 'webview-mode' : ''} pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] pr-[env(safe-area-inset-right)] pl-[env(safe-area-inset-left)]`}>
-      {!isEmbed && env.isStandalone && <Header />}
-      <main class="flex-1">
-        <Slot />
-      </main>
-      {!isEmbed && env.isStandalone && <Footer />}
-    </div>
   );
 });
