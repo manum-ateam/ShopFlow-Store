@@ -94,8 +94,11 @@ npm run preview
 
 ##  Performance Metrics (Lighthouse)
 ![alt text](image-2.png)
+<img width="1305" height="763" alt="image" src="https://github.com/user-attachments/assets/a227c5eb-7b47-480c-b307-dbe8f5d072a6" />
 
-- **Performance**: 77+
+
+
+- **Performance**:98+
 - **Accessibility**: 93
 - **Best Practices**: 100
 - **SEO**: 100
