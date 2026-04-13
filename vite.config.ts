@@ -2,7 +2,8 @@
  * This is the base config for vite.
  * When building, the adapter config is used which loads this file and extends it.
  */
-import { defineConfig, type UserConfig } from "vite";
+/// <reference types="vitest" />
+import { defineConfig } from "vitest/config";
 import { qwikVite } from "@builder.io/qwik/optimizer";
 import { qwikCity } from "@builder.io/qwik-city/vite";
 import tsconfigPaths from "vite-tsconfig-paths";
@@ -20,7 +21,7 @@ errorOnDuplicatesPkgDeps(devDependencies, dependencies);
 /**
  * Note that Vite normally starts from `index.html` but the qwikCity plugin makes start at `src/entry.ssr.tsx` instead.
  */
-export default defineConfig(({ command, mode }): UserConfig => {
+export default defineConfig(({ command, mode }) => {
   return {
     plugins: [tailwindcss(), qwikCity(), qwikVite(), tsconfigPaths({ root: "." })],
     // This tells Vite which dependencies to pre-build in dev mode.
@@ -28,6 +29,11 @@ export default defineConfig(({ command, mode }): UserConfig => {
       // Put problematic deps that break bundling here, mostly those with binaries.
       // For example ['better-sqlite3'] if you use that in server functions.
       exclude: [],
+    },
+    test: {
+      globals: true,
+      environment: "node",
+      include: ["src/**/*.{test,spec}.{ts,tsx}"],
     },
 
     /**
